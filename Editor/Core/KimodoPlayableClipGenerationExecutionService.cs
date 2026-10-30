@@ -483,12 +483,7 @@ namespace KimodoBridge.Editor
                     finalized++;
                 }
 
-                if (!KimodoTimelineOffsetUtility.MatchClipsToPrevious(
-                        entries.ConvertAll(entry => entry.TimelineClip),
-                        out string offsetMessage))
-                {
-                    Debug.LogWarning("[Kimodo] Connected clips generated, but " + offsetMessage);
-                }
+                ScheduleConnectedOffsetMatch(entries.ConvertAll(entry => entry.TimelineClip));
             }
             catch
             {
@@ -500,6 +495,34 @@ namespace KimodoBridge.Editor
             }
 
             return baked[baked.Count - 1];
+        }
+
+        // Matching right after finalize evaluated stale clip content and left later clips at a zero
+        // offset; wait until the generation job has completed and the editor has ticked again.
+        private static void ScheduleConnectedOffsetMatch(List<TimelineClip> clips)
+        {
+            int settleUpdates = 2;
+            void Tick()
+            {
+                for (int i = 0; i < clips.Count; i++)
+                {
+                    if (clips[i]?.asset is KimodoPlayableClip playable &&
+                        KimodoEditorGenerationJobService.TryGet(playable, out KimodoEditorGenerationJobSession session) &&
+                        session != null &&
+                        session.IsRunning)
+                    {
+                        return;
+                    }
+                }
+                if (settleUpdates-- > 0) return;
+
+                EditorApplication.update -= Tick;
+                if (!KimodoTimelineOffsetUtility.MatchClipsToPrevious(clips, out string offsetMessage))
+                {
+                    Debug.LogWarning("[Kimodo] Connected clips generated, but " + offsetMessage);
+                }
+            }
+            EditorApplication.update += Tick;
         }
 
         private static void BuildConnectedRequests(
