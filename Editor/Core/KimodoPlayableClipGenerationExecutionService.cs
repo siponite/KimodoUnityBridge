@@ -482,6 +482,13 @@ namespace KimodoBridge.Editor
                     KimodoPlayableClipGenerationHostService.FinalizeGeneration(entries[i].Clip, entries[i].Request, baked[i]);
                     finalized++;
                 }
+
+                if (!KimodoTimelineOffsetUtility.MatchClipsToPrevious(
+                        entries.ConvertAll(entry => entry.TimelineClip),
+                        out string offsetMessage))
+                {
+                    Debug.LogWarning("[Kimodo] Connected clips generated, but " + offsetMessage);
+                }
             }
             catch
             {
