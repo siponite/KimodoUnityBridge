@@ -270,7 +270,18 @@ namespace KimodoBridge.Editor
                 return null;
             }
 
-#if UNITY_6000_0_OR_NEWER
+#if UNITY_6000_4_OR_NEWER
+            // TRE compatibility: callers supply KimodoRuntimeUtility.ObjectIdentityHash,
+            // which is a hash of EntityId, not a convertible legacy instance ID.
+            UnityEngine.Object match = null;
+            foreach (var candidate in Resources.FindObjectsOfTypeAll<UnityEngine.Object>())
+            {
+                if (candidate.GetEntityId().GetHashCode() != objectId) continue;
+                if (match != null) throw new InvalidOperationException("Ambiguous Kimodo object identity hash.");
+                match = candidate;
+            }
+            return match;
+#elif UNITY_6000_0_OR_NEWER
             return EditorUtility.EntityIdToObject(objectId);
 #else
             return EditorUtility.InstanceIDToObject(objectId);
