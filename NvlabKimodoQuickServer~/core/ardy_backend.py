@@ -839,7 +839,16 @@ class ArdySession:
         self.diffusion_steps = self._resolve_steps(
             request.get("diffusion_steps", profile.max_diffusion_steps)
         )
-        self.cfg_text_weight = 2.0
+        from core import kimodo_runtime
+
+        self.cfg_text_weight, self.cfg_constraint_weight = kimodo_runtime._resolve_cfg_weights(
+            request,
+            default_constraint=float(profile.cfg_constraint_weight),
+        )
+        self.post_processing, self.root_margin = kimodo_runtime._resolve_post_processing(
+            request,
+            default_enabled=bool(getattr(profile, "postprocess", False)),
+        )
         requested_seed = request.get("seed")
         self.resolved_seed = secrets.randbelow(2**31) if requested_seed is None else int(requested_seed)
         self.returned_until = 0
@@ -1435,7 +1444,10 @@ class ArdySession:
                 "num_denoising_steps": self.diffusion_steps,
                 "motion_mask": motion_mask,
                 "observed_motion": observed,
-                "cfg_weight": (self.cfg_text_weight, float(self.profile.cfg_constraint_weight)),
+                "cfg_weight": (
+                    self.cfg_text_weight,
+                    float(getattr(self, "cfg_constraint_weight", self.profile.cfg_constraint_weight)),
+                ),
                 "texts": [self.prompt],
                 "init_history_sequence": history,
             }
@@ -1466,7 +1478,8 @@ class ArdySession:
             max(start, horizon_start) < min(start + int(source.shape[1]), horizon_start + horizon)
             for start, source, _ in self.future_clips
         )
-        if bool(getattr(self.profile, "postprocess", False)) and not future_clip_active:
+        post_processing = bool(getattr(self, "post_processing", getattr(self.profile, "postprocess", False)))
+        if post_processing and not future_clip_active:
             output.update(
                 post_process_motion(
                     output["local_rot_mats"],
@@ -1474,6 +1487,7 @@ class ArdySession:
                     output["foot_contacts"],
                     model.motion_rep.skeleton,
                     constraint_lst=post_constraints or None,
+                    root_margin=float(getattr(self, "root_margin", 0.04)),
                 )
             )
 

@@ -12,6 +12,11 @@ namespace KimodoBridge
         public double time_as_double;
         public int? seed;
         public int steps;
+        // Optional generation tuning. Null keeps the server defaults (CFG 2/2, post-processing on, root margin 0.04).
+        public double? cfg_text_weight;
+        public double? cfg_constraint_weight;
+        public bool? post_processing;
+        public double? root_margin;
         [NonSerialized] public KimodoConstraintPayload constraints = new KimodoConstraintPayload();
         // Optional JSON object forwarded as the protocol-level analysis_option field.
         public string analysis_option_json;

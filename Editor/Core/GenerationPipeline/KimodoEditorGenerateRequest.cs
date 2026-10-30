@@ -36,6 +36,10 @@ namespace KimodoBridge.Editor
         public int RuntimeFrameCount;
         public int RuntimeTrimStartFrame;
         public int DiffusionSteps;
+        public float CfgTextWeight = 2f;
+        public float CfgConstraintWeight = 2f;
+        public bool PostProcessing = true;
+        public float RootMargin = 0.04f;
         public int EffectiveSeed;
         public KimodoConstraintPayload Constraints = new KimodoConstraintPayload();
         public string AnalysisOptionsJson;

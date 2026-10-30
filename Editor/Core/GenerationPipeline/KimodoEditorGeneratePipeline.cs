@@ -660,6 +660,10 @@ namespace KimodoBridge.Editor
                 duration = request.EffectiveRuntimeDurationSeconds,
                 seed = request.EffectiveSeed,
                 steps = request.DiffusionSteps,
+                cfg_text_weight = request.CfgTextWeight,
+                cfg_constraint_weight = request.CfgConstraintWeight,
+                post_processing = request.PostProcessing,
+                root_margin = request.RootMargin,
                 constraints = new KimodoConstraintPayload
                 {
                     json = request.Constraints.json ?? string.Empty,

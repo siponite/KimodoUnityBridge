@@ -225,6 +225,10 @@ namespace KimodoBridge.Editor
                 DiffusionSteps = KimodoMotionModelProfiles.ClampDiffusionSteps(
                     resolvedModelName,
                     clip.diffusionSteps),
+                CfgTextWeight = Mathf.Max(0f, clip.cfgTextWeight),
+                CfgConstraintWeight = Mathf.Max(0f, clip.cfgConstraintWeight),
+                PostProcessing = clip.postProcessing,
+                RootMargin = Mathf.Max(0f, clip.rootMargin),
                 EffectiveSeed = effectiveSeed,
                 Constraints = new KimodoConstraintPayload { json = constraintsJson, clips = clipConstraints },
                 DeferredInConstraintJson = deferredInConstraintJson,

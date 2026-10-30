@@ -276,6 +276,13 @@ namespace KimodoBridge
                     payload["duration"] = duration;
                 }
                 payload["diffusion_steps"] = request.steps;
+                AddOptional(payload, "cfg_text_weight", request.cfg_text_weight);
+                AddOptional(payload, "cfg_constraint_weight", request.cfg_constraint_weight);
+                if (request.post_processing.HasValue)
+                {
+                    payload["post_processing"] = request.post_processing.Value;
+                }
+                AddOptional(payload, "root_margin", request.root_margin);
                 payload["seed"] = request.seed.HasValue ? request.seed.Value : null;
                 payload["transition_duration"] = request.transition_duration;
                 payload["model"] = string.IsNullOrWhiteSpace(request.model) ? null : request.model;

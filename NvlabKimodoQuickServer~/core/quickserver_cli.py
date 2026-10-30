@@ -70,6 +70,7 @@ def _build_protocol_help(kimodo_root: str = "") -> dict[str, Any]:
                     "prompt", "model", "text_encoder_mode", "duration", "constraints_json",
                     "kmb_attachments", "attachment_byte_length", "analysis_option",
                     "timeline_segments", "ardy_history_weight", "ardy_playback_reserve_seconds",
+                    "cfg_text_weight", "cfg_constraint_weight", "post_processing (boolean)", "root_margin",
                     "output_format (json_compact, bvh, or kmb_v1)", "output_mp4 (boolean)",
                 ],
             },

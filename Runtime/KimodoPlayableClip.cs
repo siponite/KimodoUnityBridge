@@ -65,6 +65,17 @@ namespace KimodoBridge
         public int diffusionSteps = 100;
         public bool randomSeed = false;
         public int seed = 42;
+        [Min(0f)]
+        [Tooltip("Classifier-free guidance weight for the text prompt. Server default: 2.")]
+        public float cfgTextWeight = 2f;
+        [Min(0f)]
+        [Tooltip("Classifier-free guidance weight for constraints. Server default: 2.")]
+        public float cfgConstraintWeight = 2f;
+        [Tooltip("Apply Kimodo post-processing (foot contact cleanup and root correction) after diffusion.")]
+        public bool postProcessing = true;
+        [Min(0f)]
+        [Tooltip("Horizontal root margin in meters used by the post-processor. Server default: 0.04.")]
+        public float rootMargin = 0.04f;
         [Tooltip("Generate a baseline motion, constrain its first pose at the end, then generate an extended motion and keep its middle section.")]
         public bool generateLoop;
         [Tooltip("When looping, copy the first frame's X root position to the loop tail.")]

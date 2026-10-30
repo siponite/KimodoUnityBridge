@@ -62,6 +62,10 @@ namespace KimodoBridge.Editor
         private SerializedProperty autoRetargetOnBindingProp;
         private SerializedProperty customRetargetAvatarProp;
         private SerializedProperty curveFilterOptionsProp;
+        private SerializedProperty cfgTextWeightProp;
+        private SerializedProperty cfgConstraintWeightProp;
+        private SerializedProperty postProcessingProp;
+        private SerializedProperty rootMarginProp;
 
         private KimodoPlayableClip clip;
         private bool isGenerating;
@@ -167,6 +171,10 @@ namespace KimodoBridge.Editor
             autoRetargetOnBindingProp = serializedObject.FindProperty("autoRetargetOnBinding");
             customRetargetAvatarProp = serializedObject.FindProperty("customRetargetAvatar");
             curveFilterOptionsProp = serializedObject.FindProperty("curveFilterOptions");
+            cfgTextWeightProp = serializedObject.FindProperty("cfgTextWeight");
+            cfgConstraintWeightProp = serializedObject.FindProperty("cfgConstraintWeight");
+            postProcessingProp = serializedObject.FindProperty("postProcessing");
+            rootMarginProp = serializedObject.FindProperty("rootMargin");
         }
 
         internal void SetBridgeGenerationInputsForTests(
@@ -804,6 +812,39 @@ namespace KimodoBridge.Editor
             }
         }
 
+        private void DrawGenerationTuningOptions()
+        {
+            EditorGUILayout.Space(4f);
+            EditorGUILayout.LabelField("Generation Options", EditorStyles.boldLabel);
+            if (cfgTextWeightProp != null)
+            {
+                EditorGUILayout.PropertyField(
+                    cfgTextWeightProp,
+                    new GUIContent("CFG Text", "Classifier-free guidance weight for the text prompt (default 2). Connected generations use the first clip's value."));
+            }
+
+            if (cfgConstraintWeightProp != null)
+            {
+                EditorGUILayout.PropertyField(
+                    cfgConstraintWeightProp,
+                    new GUIContent("CFG Constraint", "Classifier-free guidance weight for constraints (default 2). Connected generations use the first clip's value."));
+            }
+
+            if (postProcessingProp != null)
+            {
+                EditorGUILayout.PropertyField(
+                    postProcessingProp,
+                    new GUIContent("Post-Processing", "Apply Kimodo foot contact cleanup and root correction after diffusion (default on)."));
+            }
+
+            if (rootMarginProp != null && (postProcessingProp == null || postProcessingProp.boolValue || postProcessingProp.hasMultipleDifferentValues))
+            {
+                EditorGUILayout.PropertyField(
+                    rootMarginProp,
+                    new GUIContent("Root Margin", "Horizontal root margin in meters used by the post-processor (default 0.04)."));
+            }
+        }
+
         private void DrawAdvancedCurveFilterSection()
         {
             if (curveFilterOptionsProp == null)
@@ -833,6 +874,8 @@ namespace KimodoBridge.Editor
                     autoBeginAnchor,
                     new GUIContent("Auto Begin Anchor", "When the first second has no effective constraint anchor, use the character's original scene Hips position and heading as a Root2D frame-0 constraint."));
             }
+
+            DrawGenerationTuningOptions();
 
             EditorGUILayout.Space(4f);
             EditorGUILayout.LabelField("Curve Filter Options", EditorStyles.boldLabel);

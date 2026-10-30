@@ -1105,6 +1105,41 @@ def _generation_segment_frames(num_frames: int, fps: float, max_duration_seconds
     return [base_frames + (1 if index < extra_frames else 0) for index in range(segment_count)]
 
 
+DEFAULT_CFG_TEXT_WEIGHT = 2.0
+DEFAULT_CFG_CONSTRAINT_WEIGHT = 2.0
+DEFAULT_POST_PROCESSING = True
+DEFAULT_ROOT_MARGIN = 0.04
+
+
+def _optional_finite_float(req: dict, name: str, default: float, *, minimum: float = 0.0) -> float:
+    raw = req.get(name)
+    if raw is None:
+        return float(default)
+    value = float(raw)
+    if not math.isfinite(value) or value < minimum:
+        raise ValueError(f"{name} must be a finite number >= {minimum:g}, got {raw!r}.")
+    return value
+
+
+def _resolve_cfg_weights(
+    req: dict,
+    default_text: float = DEFAULT_CFG_TEXT_WEIGHT,
+    default_constraint: float = DEFAULT_CFG_CONSTRAINT_WEIGHT,
+) -> tuple[float, float]:
+    """Read optional classifier-free guidance weights, falling back to the historical defaults."""
+    return (
+        _optional_finite_float(req, "cfg_text_weight", default_text),
+        _optional_finite_float(req, "cfg_constraint_weight", default_constraint),
+    )
+
+
+def _resolve_post_processing(req: dict, default_enabled: bool = DEFAULT_POST_PROCESSING) -> tuple[bool, float]:
+    """Read optional post-processing toggle and root margin (meters)."""
+    raw_enabled = req.get("post_processing")
+    enabled = bool(default_enabled) if raw_enabled is None else bool(raw_enabled)
+    return enabled, _optional_finite_float(req, "root_margin", DEFAULT_ROOT_MARGIN)
+
+
 def _run_generate(
     req: dict,
     model,
@@ -1126,7 +1161,8 @@ def _run_generate(
     duration = float(req.get("duration", 5.0))
     seed = req.get("seed", None)
     diffusion_steps = int(req.get("diffusion_steps", 100))
-    cfg_text_weight = 2.0
+    cfg_text_weight, cfg_constraint_weight = _resolve_cfg_weights(req)
+    post_processing, root_margin = _resolve_post_processing(req)
     if seed is not None:
         seed_everything(int(seed))
 
@@ -1154,6 +1190,12 @@ def _run_generate(
     progress_bar = _make_cancelable_progress_bar(
         cancel_event or threading.Event(), progress_callback
     )
+    _log(
+        "[INFO] generate settings: "
+        f"diffusion_steps={diffusion_steps} cfg_text_weight={cfg_text_weight:g} "
+        f"cfg_constraint_weight={cfg_constraint_weight:g} post_processing={post_processing} "
+        f"root_margin={root_margin:g}"
+    )
     if emit_progress:
         _out({"status": "progress", "message": f"Running diffusion ({diffusion_steps} steps)..."})
     if emit_progress and len(segment_frames) > 1:
@@ -1164,13 +1206,14 @@ def _run_generate(
         segment_frames,
         constraint_lst=constraints,
         num_denoising_steps=diffusion_steps,
-        cfg_weight=[cfg_text_weight, 2.0],
+        cfg_weight=[cfg_text_weight, cfg_constraint_weight],
         num_samples=1,
         # Keep the original single-request path intact; for long requests the
         # same built-in transition path simply receives multiple segments.
         multi_prompt=True,
         num_transition_frames=5,
-        post_processing=True,
+        post_processing=post_processing,
+        root_margin=root_margin,
         return_numpy=True,
         progress_bar=progress_bar,
     )
