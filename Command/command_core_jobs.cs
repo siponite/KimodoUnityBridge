@@ -723,6 +723,29 @@ namespace KimodoUnityBridge.Command
             return supplied.HasValue ? Mathf.Clamp(supplied.Value, 1, 1000) : 100;
         }
 
+        private const float CfgWeightWarningThreshold = 6f;
+
+        private static float? ReadOptionalCfgWeight(JObject generationOptions, string name, List<string> warnings)
+        {
+            JToken token = generationOptions?[name];
+            if (token == null || token.Type == JTokenType.Null)
+            {
+                return null;
+            }
+            float weight = ReadFiniteFloat(token, $"generation.{name}");
+            if (weight < 0f)
+            {
+                throw new InvalidOperationException($"generation.{name} must be non-negative.");
+            }
+            if (weight > CfgWeightWarningThreshold)
+            {
+                warnings.Add(
+                    $"generation.{name}={weight.ToString("0.###", CultureInfo.InvariantCulture)} is above " +
+                    $"{CfgWeightWarningThreshold.ToString("0", CultureInfo.InvariantCulture)}; strong guidance can make the motion stiff or jerky.");
+            }
+            return weight;
+        }
+
 
         private static void EnsureCanGenerate() => EnsureEditorIsIdle("Kimodo animation asset generation");
 

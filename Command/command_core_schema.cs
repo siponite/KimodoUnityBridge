@@ -664,8 +664,11 @@ namespace KimodoUnityBridge.Command
                 ["model"] = new JObject { ["type"] = "string" },
                 ["text_encoder"] = new JObject { ["type"] = "string", ["enum"] = new JArray("high_performance", "high_precision") },
                 ["seed"] = new JObject { ["type"] = "integer" },
-                ["diffusion_steps"] = new JObject { ["type"] = "integer" }
-            }, "Optional model and deterministic generation settings.");
+                ["diffusion_steps"] = new JObject { ["type"] = "integer" },
+                ["cfg_text_weight"] = new JObject { ["type"] = "number", ["minimum"] = 0 },
+                ["cfg_constraint_weight"] = new JObject { ["type"] = "number", ["minimum"] = 0 },
+                ["post_processing"] = new JObject { ["type"] = "boolean" }
+            }, "Optional model and deterministic generation settings. cfg_text_weight and cfg_constraint_weight are the separated classifier-free guidance weights (server default 2; values above 6 are accepted with a warning). post_processing toggles Kimodo foot contact and root cleanup (default true). Omitted fields keep the model profile defaults.");
         }
 
         private static PropertyDefinition OptionalOutput()

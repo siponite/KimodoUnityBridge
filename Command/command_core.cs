@@ -670,6 +670,15 @@ namespace KimodoUnityBridge.Command
                 int frameCount = Math.Max(1, KimodoFrameTimeUtility.SecondsToFrameCount(duration, frameRate));
                 int seed = generationOptions?.Value<int?>("seed") ?? (Guid.NewGuid().GetHashCode() & int.MaxValue);
                 int steps = generationOptions?.Value<int?>("diffusion_steps") ?? ResolveDiffusionSteps(arguments, modelName, modelConfiguration);
+                var generationWarnings = new List<string>();
+                float? cfgTextWeight = ReadOptionalCfgWeight(generationOptions, "cfg_text_weight", generationWarnings);
+                float? cfgConstraintWeight = ReadOptionalCfgWeight(generationOptions, "cfg_constraint_weight", generationWarnings);
+                JToken postProcessingToken = generationOptions?["post_processing"];
+                if (postProcessingToken != null && postProcessingToken.Type != JTokenType.Boolean)
+                {
+                    throw new InvalidOperationException("generation.post_processing must be a boolean.");
+                }
+                bool? postProcessing = postProcessingToken?.Value<bool>();
                 string outputFolder = KimodoEditorOutputPathUtility.NormalizeOutputFolder(outputOptions?.Value<string>("folder"));
                 string requestedAnimationName = string.IsNullOrWhiteSpace(outputOptions?.Value<string>("name"))
                     ? prompt
@@ -721,6 +730,10 @@ namespace KimodoUnityBridge.Command
                 playableClip.motionPrompt = prompt;
                 playableClip.generationFrames = frameCount;
                 playableClip.diffusionSteps = steps;
+                // Omitted fields keep the clip defaults, which match the server profile defaults.
+                if (cfgTextWeight.HasValue) playableClip.cfgTextWeight = cfgTextWeight.Value;
+                if (cfgConstraintWeight.HasValue) playableClip.cfgConstraintWeight = cfgConstraintWeight.Value;
+                if (postProcessing.HasValue) playableClip.postProcessing = postProcessing.Value;
                 playableClip.randomSeed = false;
                 playableClip.seed = seed;
                 playableClip.generateLoop = loopRequested;
@@ -789,6 +802,8 @@ namespace KimodoUnityBridge.Command
                 if (poseWarnings != null)
                     foreach (string warning in poseWarnings)
                         warnings.Add(warning);
+                foreach (string warning in generationWarnings)
+                    warnings.Add(warning);
                 foreach (JObject issue in generationCheck["duration"]?["issues"]?.OfType<JObject>() ?? Enumerable.Empty<JObject>())
                 {
                     if (!string.Equals(issue.Value<string>("code"), "duration_below_minimum", StringComparison.OrdinalIgnoreCase))
